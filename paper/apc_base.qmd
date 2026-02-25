@@ -1,0 +1,250 @@
+---
+format:
+  pdf:
+    number-sections: true
+    papersize: a4
+    keep-tex: false
+    # thanks: 
+crossref:
+#  sec-prefix: OSM
+  sec-labels: alpha A
+citeproc: false # to make multibib and wordcount work
+filters:
+  - at: pre-render
+    path: "_extensions/pandoc-ext/multibib/multibib.lua"
+  - at: pre-render
+    path: "_extensions/andrewheiss/wordcount/wordcount.lua"
+validate-yaml: false # for multibib to work
+  # - authors-block
+# reference of multibib: https://www.andrewheiss.com/blog/2023/12/11/separate-bibliographies-quarto/
+bibliography:
+  main: apc_base_main.bib
+  appendix: apc_base_app.bib
+citation_package: natbib
+tables: true # enable longtable and booktabs
+fontsize: 12pt
+indent: true
+geometry: margin=1in
+linestretch: 1.5 # double spacing using linestretch 1.5
+citecolor: black
+linkcolor: black
+link-citations: true
+execute:
+  echo: false
+  message: false
+  warning: false
+  dpi: 300
+editor_options: 
+  chunk_output_type: console
+title: |
+  | Something: An Age-Period-Cohort Analysis
+abstract: |
+  blah blah blah
+keywords:
+  - climate change
+  - public opinion
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+\pagenumbering{gobble}
+
+# Authors {.unlisted .unnumbered}
+
+-   Boram Min, ORCID: <https://orcid.org/XXXX-XXXX-XXXX-XXXX>, Ph.D. candidate, Department of Political Science, University of Iowa, [boram-min\@uiowa.edu](mailto:boram-min@uiowa.edu){.email} 
+
+-   Nicole Kemmitt, ORCID: <https://orcid.org/XXXX-XXXX-XXXX-XXXX>, Ph.D. candidate, Department of Political Science, University of Iowa, [nicole-kemmitt\@uiowa.edu](mailto:nicole-kemmitt@uiowa.edu){.email}
+
+-   Frederick Solt, ORCID: <https://orcid.org/0000-0002-3154-6132>, Professor, Department of Political Science, University of Iowa, [frederick-solt\@uiowa.edu](mailto:frederick-solt@uiowa.edu){.email}
+
+\pagebreak
+
+```{=tex}
+\renewcommand{\baselinestretch}{1}
+\selectfont
+\maketitle
+\renewcommand{\baselinestretch}{1.5}
+\selectfont
+```
+
+```{=tex}
+\begin{abstract}
+blah blah blah
+
+\textbf{Keywords:} Climate change, public opinion, China, xxx
+
+\textbf{Word Count:} xxx
+\end{abstract}
+
+```
+\pagebreak
+
+\pagenumbering{arabic}
+
+[intro paragraphs: importance of the question, to the discipline and the world]
+
+```{r setup, include=FALSE}
+options(tinytex.verbose = TRUE)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  dev = "png",
+  dpi = 800,
+  cache = TRUE,
+  fig.width = 7,
+  fig.height = 4,
+  plot = function(x, options) {
+    hook_plot_tex(x, options)
+  }
+)
+
+if (!require(pacman)) install.packages("pacman")
+
+library(pacman)
+# load all the packages you will use below 
+p_load(
+  tidyverse,
+  here,
+  rio,
+  countrycode,
+  patchwork,
+  ggthemes,
+  ggtext,
+  dotwhisker,
+  vroom,
+  tinytable,
+  gt,
+  kableExtra,
+  modelsummary
+) 
+
+```
+
+```{r define_funs}
+# define functions
+not_all_missing <- function(variable) {
+    !all(is.na(variable))
+}
+
+standardize_country_names <- function(variable) {
+    variable %>% 
+        labelled::labelled(., attr(., "labels")) %>%
+        labelled::to_factor(levels = "prefixed") %>%
+        forcats::fct_relabel(., function(x) 
+            stringr::str_remove(x, "\\[\\d+\\]\\s+")) %>%
+        as.character() %>% 
+        countrycode::countrycode("country.name", "country.name")
+}
+
+set.seed(324)
+```
+
+```{r wrangle_data, eval=FALSE}
+eib_dir <- "../Data/dcpo_surveys/misc_files/eib_files"
+
+eib_files <- paste0("climate_survey20", 18:24,
+                    "/eib_cs20", 18:24, ".RData")
+
+eib_ee <- map(eib_files, 
+              ~ rio::import(here(eib_dir, .x),
+                                       trust = TRUE) %>% 
+                  filter(country == "Estonia") %>% 
+    select(where(not_all_missing)))
+
+saveRDS(eib_ee,
+            here("data-raw", "eib_ee.rds"))
+
+# I have gotten the data into a usable format in this file, and the questions can be viewed in the codebook file (`data-raw/all_cb.csv`).  The substantive questions are different in pretty much every year (except 2020 and 2021)
+```
+
+```{r load_data}
+eib_ee <- readRDS(here("data-raw", "eib_ee.rds"))
+
+# this file is a list of seven datasets; grab any one year's data by choosing it from the list like so (2024 is the seventh year):
+eib2024_ee <- eib_ee[[7]]
+```
+
+# Climate Change Attitudes in Estonia
+
+[theory: who should we expect to care more (or whatever DVs you choose) about climate change]
+
+# Data and Method
+Previously untapped survey dataset
+[maybe scatterplots]
+
+**Remember that the publication value of these data is that no one has used them yet (because they are hard to get and badly formatted when you do get them).  _Please keep the repo private, and do not circulate the data_.**
+
+# Results
+[plots not tables]
+
+# Conclusions
+[implications and importance of our answers, to the discipline and the world]
+
+\pagebreak
+
+# References {.unnumbered}
+
+::: {#refs-main}
+:::
+
+
+
+\pagebreak
+
+```{=tex}
+\renewcommand{\baselinestretch}{1}
+\selectfont
+\maketitle
+\selectfont
+```
+```{=tex}
+\pagenumbering{arabic}
+\renewcommand*{\thepage}{A\arabic{page}}
+```
+```{=tex}
+\setcounter{section}{0}
+\renewcommand*{\thesection}{A\arabic{section}}
+```
+```{=tex}
+\setcounter{figure}{0}
+\renewcommand*{\thefigure}{A\arabic{figure}}
+```
+```{=tex}
+\setcounter{table}{0}
+\renewcommand*{\thetable}{A\arabic{table}}
+```
+```{=tex}
+\vspace{-.5in}
+\begin{center}
+\begin{Large}
+Supplementary Material
+\end{Large}
+\end{center}
+```
+
+
+\listoftables
+
+# Tabular Results
+\clearpage
+
+```{r}
+#| label: tbl-models
+#| tbl-cap: "Tabular Results"
+#| cache: false
+
+
+```
+
+# References {.unnumbered}
+
+::: {#refs-appendix}
+:::
+
+
+
+
+
